@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\buildMultiTargeting\SalesPilotPro.Api.props" />
-</Project>
