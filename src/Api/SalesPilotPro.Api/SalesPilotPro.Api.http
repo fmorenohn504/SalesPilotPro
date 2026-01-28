@@ -1,0 +1,6 @@
+@SalesPilotPro.Api_HostAddress = http://localhost:5244
+
+GET {{SalesPilotPro.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,11 @@
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Core\SalesPilotPro.Core\bin\Debug\net8.0\SalesPilotPro.Core.deps.json
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Core\SalesPilotPro.Core\bin\Debug\net8.0\SalesPilotPro.Core.dll
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Core\SalesPilotPro.Core\bin\Debug\net8.0\SalesPilotPro.Core.pdb
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Core\SalesPilotPro.Core\obj\Debug\net8.0\SalesPilotPro.Core.GeneratedMSBuildEditorConfig.editorconfig
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Core\SalesPilotPro.Core\obj\Debug\net8.0\SalesPilotPro.Core.AssemblyInfoInputs.cache
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Core\SalesPilotPro.Core\obj\Debug\net8.0\SalesPilotPro.Core.AssemblyInfo.cs
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Core\SalesPilotPro.Core\obj\Debug\net8.0\SalesPilotPro.Core.csproj.CoreCompileInputs.cache
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Core\SalesPilotPro.Core\obj\Debug\net8.0\SalesPilotPro.Core.dll
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Core\SalesPilotPro.Core\obj\Debug\net8.0\refint\SalesPilotPro.Core.dll
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Core\SalesPilotPro.Core\obj\Debug\net8.0\SalesPilotPro.Core.pdb
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Core\SalesPilotPro.Core\obj\Debug\net8.0\ref\SalesPilotPro.Core.dll

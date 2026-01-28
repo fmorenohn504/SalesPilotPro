@@ -1,0 +1,15 @@
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\bin\Debug\net8.0\SalesPilotPro.Infrastructure.deps.json
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\bin\Debug\net8.0\SalesPilotPro.Infrastructure.dll
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\bin\Debug\net8.0\SalesPilotPro.Infrastructure.pdb
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\bin\Debug\net8.0\SalesPilotPro.Core.dll
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\bin\Debug\net8.0\SalesPilotPro.Core.pdb
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\obj\Debug\net8.0\SalesPilotPro.Infrastructure.csproj.AssemblyReference.cache
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\obj\Debug\net8.0\SalesPilotPro.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\obj\Debug\net8.0\SalesPilotPro.Infrastructure.AssemblyInfoInputs.cache
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\obj\Debug\net8.0\SalesPilotPro.Infrastructure.AssemblyInfo.cs
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\obj\Debug\net8.0\SalesPilotPro.Infrastructure.csproj.CoreCompileInputs.cache
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\obj\Debug\net8.0\SalesPil.17DFDF42.Up2Date
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\obj\Debug\net8.0\SalesPilotPro.Infrastructure.dll
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\obj\Debug\net8.0\refint\SalesPilotPro.Infrastructure.dll
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\obj\Debug\net8.0\SalesPilotPro.Infrastructure.pdb
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\obj\Debug\net8.0\ref\SalesPilotPro.Infrastructure.dll
