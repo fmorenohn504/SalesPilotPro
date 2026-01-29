@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SalesPilotPro.Core")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bd7e97621592809f85948b6ccc16f7f57dc5c8bc")]
 [assembly: System.Reflection.AssemblyProductAttribute("SalesPilotPro.Core")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SalesPilotPro.Core")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

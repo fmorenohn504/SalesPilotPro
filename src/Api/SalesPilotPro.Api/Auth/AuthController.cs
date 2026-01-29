@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SalesPilotPro.Core.Security;
+using Microsoft.AspNetCore.Authorization;
+
 
 namespace SalesPilotPro.Api.Auth;
 

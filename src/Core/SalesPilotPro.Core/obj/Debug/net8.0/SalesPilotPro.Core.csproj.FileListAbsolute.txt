@@ -9,3 +9,4 @@ C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Core\SalesPilotPro.Cor
 C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Core\SalesPilotPro.Core\obj\Debug\net8.0\refint\SalesPilotPro.Core.dll
 C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Core\SalesPilotPro.Core\obj\Debug\net8.0\SalesPilotPro.Core.pdb
 C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Core\SalesPilotPro.Core\obj\Debug\net8.0\ref\SalesPilotPro.Core.dll
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Core\SalesPilotPro.Core\obj\Debug\net8.0\SalesPilotPro.Core.sourcelink.json

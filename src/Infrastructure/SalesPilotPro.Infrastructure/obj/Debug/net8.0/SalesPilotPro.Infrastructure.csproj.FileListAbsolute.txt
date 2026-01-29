@@ -13,3 +13,6 @@ C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPi
 C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\obj\Debug\net8.0\refint\SalesPilotPro.Infrastructure.dll
 C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\obj\Debug\net8.0\SalesPilotPro.Infrastructure.pdb
 C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\obj\Debug\net8.0\ref\SalesPilotPro.Infrastructure.dll
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\obj\Debug\net8.0\SalesPilotPro.Infrastructure.sourcelink.json
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\bin\Debug\net8.0\SalesPilotPro.Infrastructure.runtimeconfig.json
+C:\FlutterProjects\SalesPilotPro\BackendSalesPilotPro\src\Infrastructure\SalesPilotPro.Infrastructure\obj\Debug\net8.0\SalesPilotPro.Infrastructure.genruntimeconfig.cache
