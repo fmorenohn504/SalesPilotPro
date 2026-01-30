@@ -1,35 +1,40 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using SalesPilotPro.Core.Security;
-using Microsoft.AspNetCore.Authorization;
-
 
 namespace SalesPilotPro.Api.Auth;
 
 // Login DEV – NO producción
+[ApiVersion("1.0")]
 [ApiController]
 [Route("api/auth")]
 public sealed class AuthController : ControllerBase
 {
     private readonly IJwtProvider _jwtProvider;
+    private readonly bool _enableDevLogin;
 
-    public AuthController(IJwtProvider jwtProvider)
+    public AuthController(
+        IJwtProvider jwtProvider,
+        IConfiguration configuration)
     {
         _jwtProvider = jwtProvider;
+        _enableDevLogin = configuration.GetValue<bool>("Features:EnableDevLogin");
     }
 
-    [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
+    [HttpPost("login-dev")]
+    public IActionResult LoginDev([FromBody] LoginRequest request)
     {
-        // ⚠️ DEV ONLY – usuario hardcodeado
+        if (!_enableDevLogin)
+            return NotFound();
+
         if (string.IsNullOrWhiteSpace(request.Username))
             return BadRequest("Username requerido");
 
-        // Datos simulados (DEV)
         var tenantId = Guid.Parse("11111111-1111-1111-1111-111111111111");
         var userId = Guid.NewGuid();
 
-        var roles = new[] { "Admin" };
-        var modules = new[] { "Budget", "Reports" };
+        var roles = new[] { "admin" };
+        var modules = new[] { "crm", "reports", "admin" };
 
         var token = _jwtProvider.GenerateToken(
             tenantId,

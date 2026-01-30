@@ -5,6 +5,7 @@ using SalesPilotPro.Api.Security;
 
 namespace SalesPilotPro.Api.Controllers.Crm;
 
+[ApiVersion("1.0")]
 [Authorize]
 [AuthorizeModule("crm")]
 [Route("api/crm")]
