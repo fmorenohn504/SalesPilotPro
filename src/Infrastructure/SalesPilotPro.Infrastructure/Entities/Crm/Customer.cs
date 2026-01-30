@@ -15,4 +15,10 @@ public sealed class Customer
     public string Code { get; set; } = string.Empty;
 
     public bool IsActive { get; set; } = true;
+
+    public DateTime CreatedAtUtc { get; set; }
+    public Guid CreatedBy { get; set; }
+
+    public DateTime? UpdatedAtUtc { get; set; }
+    public Guid? UpdatedBy { get; set; }
 }

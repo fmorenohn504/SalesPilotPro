@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SalesPilotPro.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9ec66d223ebc25569e94bad1cf1dd45d7c2ccb15")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3e86828fa6a0720fbafe074559f6e3d14e06d261")]
 [assembly: System.Reflection.AssemblyProductAttribute("SalesPilotPro.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SalesPilotPro.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

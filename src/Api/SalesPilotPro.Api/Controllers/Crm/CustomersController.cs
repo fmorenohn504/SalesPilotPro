@@ -10,7 +10,7 @@ using SalesPilotPro.Infrastructure.Persistence;
 namespace SalesPilotPro.Api.Controllers.Crm;
 
 [ApiVersion("1.0")]
-[AuthorizeModule("crm")]
+[AuthorizeModule("CRM")]
 [Route("api/v{version:apiVersion}/crm/customers")]
 public sealed class CustomersController : ApiControllerBase
 {
@@ -21,11 +21,7 @@ public sealed class CustomersController : ApiControllerBase
         _db = db;
     }
 
-    // GET: api/v1/crm/customers
     [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? search,
         [FromQuery] int skip = 0,
@@ -82,10 +78,7 @@ public sealed class CustomersController : ApiControllerBase
         }));
     }
 
-    // GET: api/v1/crm/customers/{id}
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
     {
         var customer = await _db.Customers
@@ -104,16 +97,13 @@ public sealed class CustomersController : ApiControllerBase
         }));
     }
 
-    // POST: api/v1/crm/customers
     [HttpPost]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(CustomerCreateDto input)
     {
         if (!ModelState.IsValid)
             return BadRequest(ApiResponse<object>.Fail("Invalid data"));
 
-        var userId = Guid.Parse(User.FindFirst("userId")!.Value);
+        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
 
         var customer = new Customer
         {
@@ -121,7 +111,7 @@ public sealed class CustomersController : ApiControllerBase
             TenantId = _db.TenantId,
             Name = input.Name,
             Code = input.Code,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAtUtc = DateTime.UtcNow,
             CreatedBy = userId,
             IsActive = true
         };
@@ -142,10 +132,7 @@ public sealed class CustomersController : ApiControllerBase
         );
     }
 
-    // PUT: api/v1/crm/customers/{id}
     [HttpPut("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(Guid id, CustomerUpdateDto input)
     {
         if (!ModelState.IsValid)
@@ -155,12 +142,12 @@ public sealed class CustomersController : ApiControllerBase
         if (customer is null)
             return NotFound(ApiResponse<object>.Fail("Customer not found"));
 
-        var userId = Guid.Parse(User.FindFirst("userId")!.Value);
+        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
 
         customer.Name = input.Name;
         customer.Code = input.Code;
         customer.IsActive = input.IsActive;
-        customer.UpdatedAt = DateTime.UtcNow;
+        customer.UpdatedAtUtc = DateTime.UtcNow;
         customer.UpdatedBy = userId;
 
         await _db.SaveChangesAsync();
@@ -174,20 +161,17 @@ public sealed class CustomersController : ApiControllerBase
         }));
     }
 
-    // DELETE: api/v1/crm/customers/{id}
     [HttpDelete("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
         var customer = await _db.Customers.FirstOrDefaultAsync(x => x.Id == id);
         if (customer is null)
             return NotFound(ApiResponse<object>.Fail("Customer not found"));
 
-        var userId = Guid.Parse(User.FindFirst("userId")!.Value);
+        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
 
         customer.IsActive = false;
-        customer.UpdatedAt = DateTime.UtcNow;
+        customer.UpdatedAtUtc = DateTime.UtcNow;
         customer.UpdatedBy = userId;
 
         await _db.SaveChangesAsync();

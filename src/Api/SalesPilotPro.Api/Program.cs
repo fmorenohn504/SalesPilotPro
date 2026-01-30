@@ -1,4 +1,3 @@
-using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +5,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using SalesPilotPro.Api.Contexts;
 using SalesPilotPro.Api.Middleware;
+using SalesPilotPro.Core.Contexts;
 using SalesPilotPro.Infrastructure.DependencyInjection;
 using Serilog;
 
@@ -14,8 +14,6 @@ var builder = WebApplication.CreateBuilder(args);
 // =======================
 // CONFIG
 // =======================
-
-var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "DEV_ONLY_SECRET_KEY_CHANGE_LATER";
 
 var allowedOrigins =
     builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
@@ -27,9 +25,6 @@ var rateWindowSeconds = builder.Configuration.GetValue<int>("RateLimit:WindowSec
 // =======================
 // SERVICES
 // =======================
-
-builder.Services.AddScoped<SalesPilotPro.Core.Contexts.ITenantContext>(_ =>
-    new DevTenantContext());
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -79,36 +74,46 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// JWT
+// =======================
+// TENANT CONTEXT
+// =======================
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ITenantContext, HttpTenantContext>();
+
+// =======================
+// AUTHENTICATION (RESOURCE SERVER ONLY)
+// =======================
+
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.RequireHttpsMetadata = true;
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = false,
-            ValidateAudience = false,
+            ValidateIssuer = true,
+            ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey =
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
+            ClockSkew = TimeSpan.Zero
         };
     });
 
-// Authorization
+// =======================
+// AUTHORIZATION (MODULE GATE)
+// =======================
+
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("MODULE_crm",
-        policy => policy.RequireClaim("module", "crm"));
-
-    options.AddPolicy("MODULE_reports",
-        policy => policy.RequireClaim("module", "reports"));
-
-    options.AddPolicy("MODULE_admin",
-        policy => policy.RequireClaim("module", "admin"));
+    options.AddPolicy("MODULE_CRM",
+        policy => policy.RequireClaim("mods", "CRM"));
 });
 
-// API Versioning
+// =======================
+// API VERSIONING
+// =======================
+
 builder.Services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new ApiVersion(1, 0);
@@ -122,10 +127,16 @@ builder.Services.AddVersionedApiExplorer(options =>
     options.SubstituteApiVersionInUrl = true;
 });
 
-// Health
+// =======================
+// HEALTH
+// =======================
+
 builder.Services.AddHealthChecks();
 
-// Rate Limiting
+// =======================
+// RATE LIMITING
+// =======================
+
 builder.Services.AddRateLimiter(options =>
 {
     options.AddFixedWindowLimiter("fixed", opt =>
@@ -137,7 +148,10 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 
-// CORS (PROD hardened via config)
+// =======================
+// CORS
+// =======================
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("default", policy =>
@@ -150,7 +164,10 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Serilog
+// =======================
+// LOGGING
+// =======================
+
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .Enrich.FromLogContext()
@@ -194,10 +211,8 @@ app.Use(async (context, next) =>
 
 app.UseCors("default");
 
-app.UseMiddleware<JwtContextMiddleware>();
-
 app.UseAuthentication();
-app.UseMiddleware<JwtTenantMiddleware>();
+app.UseMiddleware<TenantGateMiddleware>();
 app.UseAuthorization();
 
 app.UseRateLimiter();

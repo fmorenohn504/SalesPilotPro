@@ -4,8 +4,8 @@ namespace SalesPilotPro.Api.Security;
 
 public sealed class AuthorizeModuleAttribute : AuthorizeAttribute
 {
-    public AuthorizeModuleAttribute(string module)
+    public AuthorizeModuleAttribute(string requiredModule = "CRM")
     {
-        Policy = $"MODULE_{module}";
+        Policy = "MODULE_CRM";
     }
 }
