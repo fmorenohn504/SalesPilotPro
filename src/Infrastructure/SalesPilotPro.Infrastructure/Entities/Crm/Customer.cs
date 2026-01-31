@@ -1,11 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using SalesPilotPro.Infrastructure.Entities;
 
 namespace SalesPilotPro.Infrastructure.Entities.Crm;
 
-public sealed class Customer
+public sealed class Customer : TenantEntity
 {
     public Guid Id { get; set; }
-    public Guid TenantId { get; set; }
 
     [Required]
     [MaxLength(150)]
@@ -16,6 +16,7 @@ public sealed class Customer
 
     public bool IsActive { get; set; } = true;
 
+    // Auditoría
     public DateTime CreatedAtUtc { get; set; }
     public Guid CreatedBy { get; set; }
 

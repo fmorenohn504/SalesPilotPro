@@ -20,12 +20,18 @@ public sealed class SalesPilotProDbContext : DbContext
         _tenantContext = tenantContext;
     }
 
+    // =======================
+    // DbSets
+    // =======================
+
     public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
+        // Global Tenant Filter
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             if (typeof(TenantEntity).IsAssignableFrom(entityType.ClrType))
@@ -34,6 +40,13 @@ public sealed class SalesPilotProDbContext : DbContext
                     .HasQueryFilter(CreateTenantFilter(entityType.ClrType));
             }
         }
+
+        // AuditEvents mapping
+        modelBuilder.Entity<AuditEvent>(b =>
+        {
+            b.ToTable("AuditEvents", "crm");
+            b.HasKey(x => x.Id);
+        });
     }
 
     private LambdaExpression CreateTenantFilter(Type entityType)

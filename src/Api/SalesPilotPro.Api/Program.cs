@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using SalesPilotPro.Api.Contexts;
 using SalesPilotPro.Api.Middleware;
+using SalesPilotPro.Api.Security;
 using SalesPilotPro.Core.Contexts;
 using SalesPilotPro.Infrastructure.DependencyInjection;
 using Serilog;
@@ -73,6 +74,13 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// =======================
+// SESSION VALIDATION (DEV)
+// =======================
+
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<ISessionValidationClient, DevSessionValidationClient>();
 
 // =======================
 // TENANT CONTEXT
@@ -212,10 +220,13 @@ app.Use(async (context, next) =>
 app.UseCors("default");
 
 app.UseAuthentication();
+app.UseMiddleware<SessionValidationMiddleware>();
 app.UseMiddleware<TenantGateMiddleware>();
 app.UseAuthorization();
 
 app.UseRateLimiter();
+
+app.UseMiddleware<AuditMiddleware>();
 
 app.MapControllers();
 app.MapHealthChecks("/health");
