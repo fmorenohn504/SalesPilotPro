@@ -50,7 +50,7 @@ public sealed class JwtContextMiddleware
             .ToList();
 
         // Crear contextos
-        var tenantContext = new TenantContext(tenantId, tenantCode: "DEV");
+        var tenantContext = new TenantContext(tenantId);
         var userContext = new UserContext(userId, roles);
         var moduleContext = new ModuleContext(modules);
 

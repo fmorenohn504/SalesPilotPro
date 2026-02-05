@@ -2,9 +2,13 @@ using SalesPilotPro.Core.Contexts;
 
 namespace SalesPilotPro.Api.Contexts;
 
-// ⚠️ SOLO DEV – se elimina cuando JWT esté activo
 public sealed class DevTenantContext : ITenantContext
 {
-    public Guid TenantId => Guid.Empty;
-    public string TenantCode => "DEV";
+    public Guid TenantId { get; private set; }
+    public string TenantCode { get; private set; } = "DEV";
+
+    public void SetTenant(Guid tenantId)
+    {
+        TenantId = tenantId;
+    }
 }

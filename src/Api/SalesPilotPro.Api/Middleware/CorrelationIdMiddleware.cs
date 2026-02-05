@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace SalesPilotPro.Api.Middleware;
 
 public sealed class CorrelationIdMiddleware
@@ -12,16 +14,21 @@ public sealed class CorrelationIdMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (!context.Request.Headers.TryGetValue(HeaderName, out var correlationId))
-        {
-            correlationId = Guid.NewGuid().ToString();
-            context.Request.Headers[HeaderName] = correlationId;
-        }
+        var correlationId =
+            context.Request.Headers.TryGetValue(HeaderName, out var value) &&
+            !string.IsNullOrWhiteSpace(value)
+                ? value.ToString()
+                : Guid.NewGuid().ToString();
 
+        context.Items[HeaderName] = correlationId;
         context.Response.Headers[HeaderName] = correlationId;
 
-        using (Serilog.Context.LogContext.PushProperty("CorrelationId", correlationId.ToString()))
+        using (Activity.Current = new Activity("Request"))
         {
+            Activity.Current.SetIdFormat(ActivityIdFormat.W3C);
+            Activity.Current.Start();
+            Activity.Current.AddTag(HeaderName, correlationId);
+
             await _next(context);
         }
     }

@@ -22,7 +22,7 @@ public sealed class AuthController : ControllerBase
         _jwtProvider = jwtProvider;
     }
 
-    // POST: api/auth/login-dev
+    [AllowAnonymous]
     [HttpPost("login-dev")]
     public async Task<IActionResult> LoginDev([FromBody] LoginDevRequest request)
     {
@@ -37,29 +37,20 @@ public sealed class AuthController : ControllerBase
             return NotFound("User not found");
 
         var roles = new[] { "admin" };
-        var modules = new[] { "crm", "reports", "admin" };
+        var modules = new[] { "CRM", "REPORTS", "ADMIN" };
 
         var token = _jwtProvider.GenerateToken(
             tenantId: user.TenantId,
             userId: user.Id,
+            sessionId: Guid.NewGuid(),
             roles: roles,
             modules: modules
         );
 
         return Ok(new
         {
-            token
-        });
-    }
-
-    // GET: api/auth/me
-    [Authorize]
-    [HttpGet("me")]
-    public IActionResult Me()
-    {
-        return Ok(new
-        {
-            message = "JWT válido. Acceso concedido."
+            access_token = token,
+            token_type = "Bearer"
         });
     }
 }

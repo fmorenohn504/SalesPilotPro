@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using SalesPilotPro.Api.Contexts;
 using SalesPilotPro.Api.Middleware;
+using SalesPilotPro.Api.Security; // 🔧 ESTE USING FALTABA
+using SalesPilotPro.Core.Contexts;
+using SalesPilotPro.Core.Security;
 using SalesPilotPro.Infrastructure.DependencyInjection;
 using Serilog;
 
@@ -15,21 +18,27 @@ var builder = WebApplication.CreateBuilder(args);
 // CONFIG
 // =======================
 
-var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "DEV_ONLY_SECRET_KEY_CHANGE_LATER";
-
 var allowedOrigins =
     builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
     ?? Array.Empty<string>();
 
-var ratePermitLimit = builder.Configuration.GetValue<int>("RateLimit:PermitLimit", 100);
-var rateWindowSeconds = builder.Configuration.GetValue<int>("RateLimit:WindowSeconds", 60);
+var ratePermitLimit =
+    builder.Configuration.GetValue<int>("RateLimit:PermitLimit", 100);
+
+var rateWindowSeconds =
+    builder.Configuration.GetValue<int>("RateLimit:WindowSeconds", 60);
 
 // =======================
 // SERVICES
 // =======================
 
-builder.Services.AddScoped<SalesPilotPro.Core.Contexts.ITenantContext>(_ =>
-    new DevTenantContext());
+builder.Services.AddMemoryCache();
+
+builder.Services.AddScoped<ITenantContext, DevTenantContext>();
+builder.Services.AddScoped<ISessionValidationClient, DevSessionValidationClient>();
+
+// 🔐 JWT Provider
+builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -40,17 +49,13 @@ builder.Services.AddControllers()
             System.Text.Json.JsonNamingPolicy.CamelCase;
     });
 
-builder.Services.AddEndpointsApiExplorer();
-
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
     {
-        Title = "SalesPilotPro API",
+        Title = "SalesPilotPro CRM API",
         Version = "v1"
     });
-
-    c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
 
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
@@ -79,11 +84,17 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// JWT
+// =======================
+// AUTHENTICATION (JWT)
+// =======================
+
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.RequireHttpsMetadata = false;
+        options.MapInboundClaims = false;
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = false,
@@ -91,24 +102,32 @@ builder.Services
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey =
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
+                new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!)
+                ),
+            ClockSkew = TimeSpan.Zero,
+            NameClaimType = "sub"
         };
     });
 
-// Authorization
+// =======================
+// AUTHORIZATION
+// =======================
+
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("MODULE_crm",
-        policy => policy.RequireClaim("module", "crm"));
+    options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
 
-    options.AddPolicy("MODULE_reports",
-        policy => policy.RequireClaim("module", "reports"));
-
-    options.AddPolicy("MODULE_admin",
-        policy => policy.RequireClaim("module", "admin"));
+    options.AddPolicy("MODULE_CRM",
+        policy => policy.RequireClaim("mods", "CRM"));
 });
 
-// API Versioning
+// =======================
+// API VERSIONING
+// =======================
+
 builder.Services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new ApiVersion(1, 0);
@@ -118,14 +137,20 @@ builder.Services.AddApiVersioning(options =>
 
 builder.Services.AddVersionedApiExplorer(options =>
 {
-    options.GroupNameFormat = "'v'VVV";
+    options.GroupNameFormat = "'v'V";
     options.SubstituteApiVersionInUrl = true;
 });
 
-// Health
+// =======================
+// HEALTH
+// =======================
+
 builder.Services.AddHealthChecks();
 
-// Rate Limiting
+// =======================
+// RATE LIMITING
+// =======================
+
 builder.Services.AddRateLimiter(options =>
 {
     options.AddFixedWindowLimiter("fixed", opt =>
@@ -137,7 +162,10 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 
-// CORS (PROD hardened via config)
+// =======================
+// CORS
+// =======================
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("default", policy =>
@@ -150,7 +178,10 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Serilog
+// =======================
+// LOGGING
+// =======================
+
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .Enrich.FromLogContext()
@@ -167,42 +198,25 @@ var app = builder.Build();
 // =======================
 
 app.UseMiddleware<CorrelationIdMiddleware>();
-app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "SalesPilotPro API v1");
-    });
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
-
-app.Use(async (context, next) =>
-{
-    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
-    context.Response.Headers["X-Frame-Options"] = "DENY";
-    context.Response.Headers["Referrer-Policy"] = "no-referrer";
-    context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
-    context.Response.Headers["Content-Security-Policy"] =
-        "default-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self';";
-
-    await next();
-});
-
 app.UseCors("default");
-
-app.UseMiddleware<JwtContextMiddleware>();
+app.UseRouting();
 
 app.UseAuthentication();
-app.UseMiddleware<JwtTenantMiddleware>();
+app.UseMiddleware<TenantGateMiddleware>();
+app.UseMiddleware<SessionValidationMiddleware>();
 app.UseAuthorization();
 
 app.UseRateLimiter();
 
+app.MapHealthChecks("/health").AllowAnonymous();
 app.MapControllers();
-app.MapHealthChecks("/health");
 
 app.Run();
