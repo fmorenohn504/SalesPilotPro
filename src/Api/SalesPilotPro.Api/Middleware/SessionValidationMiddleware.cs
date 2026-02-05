@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Caching.Memory;
 using SalesPilotPro.Core.Security;
-using System.Security.Claims;
 
 namespace SalesPilotPro.Api.Middleware;
 
@@ -29,13 +28,13 @@ public sealed class SessionValidationMiddleware
 
         if (context.User?.Identity?.IsAuthenticated != true)
         {
-            await _next(context);
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             return;
         }
 
-        var tenantId = context.User.FindFirstValue("tid");
-        var sessionId = context.User.FindFirstValue("sid");
-        var userId = context.User.FindFirstValue("sub");
+        var tenantId = context.User.FindFirst("tid")?.Value;
+        var sessionId = context.User.FindFirst("sid")?.Value;
+        var userId = context.User.FindFirst("sub")?.Value;
 
         if (tenantId is null || sessionId is null || userId is null)
         {

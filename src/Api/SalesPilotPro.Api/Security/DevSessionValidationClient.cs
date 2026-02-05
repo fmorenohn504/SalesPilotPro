@@ -7,9 +7,10 @@ public sealed class DevSessionValidationClient : ISessionValidationClient
     public Task<bool> IsSessionValidAsync(
         Guid tenantId,
         Guid sessionId,
-        Guid actorUserId,
-        CancellationToken ct)
+        Guid userId,
+        CancellationToken cancellationToken)
     {
+        // DEV ONLY: siempre válida
         return Task.FromResult(true);
     }
 }

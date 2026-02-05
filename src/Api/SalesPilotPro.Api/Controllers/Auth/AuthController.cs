@@ -30,6 +30,7 @@ public sealed class AuthController : ControllerBase
             return BadRequest("Username is required");
 
         var user = await _db.UsersTemp
+            .IgnoreQueryFilters() // ⬅️ CLAVE
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Username == request.Username && u.IsActive);
 
@@ -42,7 +43,6 @@ public sealed class AuthController : ControllerBase
         var token = _jwtProvider.GenerateToken(
             tenantId: user.TenantId,
             userId: user.Id,
-            sessionId: Guid.NewGuid(),
             roles: roles,
             modules: modules
         );

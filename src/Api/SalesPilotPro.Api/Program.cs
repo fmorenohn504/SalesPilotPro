@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using SalesPilotPro.Api.Contexts;
 using SalesPilotPro.Api.Middleware;
-using SalesPilotPro.Api.Security; // 🔧 ESTE USING FALTABA
+using SalesPilotPro.Api.Security;
 using SalesPilotPro.Core.Contexts;
 using SalesPilotPro.Core.Security;
 using SalesPilotPro.Infrastructure.DependencyInjection;
@@ -34,11 +34,9 @@ var rateWindowSeconds =
 
 builder.Services.AddMemoryCache();
 
+// Tenant / Session (DEV)
 builder.Services.AddScoped<ITenantContext, DevTenantContext>();
 builder.Services.AddScoped<ISessionValidationClient, DevSessionValidationClient>();
-
-// 🔐 JWT Provider
-builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -194,7 +192,7 @@ builder.Host.UseSerilog();
 var app = builder.Build();
 
 // =======================
-// PIPELINE
+// PIPELINE (ORDEN CORRECTO)
 // =======================
 
 app.UseMiddleware<CorrelationIdMiddleware>();
@@ -207,7 +205,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("default");
+
 app.UseRouting();
+
+// ⬇️ Health DESPUÉS de routing y ANTES de auth
+app.MapHealthChecks("/health").AllowAnonymous();
 
 app.UseAuthentication();
 app.UseMiddleware<TenantGateMiddleware>();
@@ -216,7 +218,6 @@ app.UseAuthorization();
 
 app.UseRateLimiter();
 
-app.MapHealthChecks("/health").AllowAnonymous();
 app.MapControllers();
 
 app.Run();
