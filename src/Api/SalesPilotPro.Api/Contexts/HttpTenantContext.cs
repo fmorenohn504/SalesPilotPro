@@ -4,11 +4,12 @@ namespace SalesPilotPro.Api.Contexts;
 
 public sealed class HttpTenantContext : ITenantContext
 {
-    public Guid TenantId { get; }
+    public Guid? TenantId { get; private set; }
+    public string? TenantCode { get; private set; }
 
-    public string TenantCode { get; }
+    public bool IsResolved => TenantId.HasValue;
 
-    public HttpTenantContext(Guid tenantId, string tenantCode)
+    public void SetTenant(Guid tenantId, string tenantCode)
     {
         TenantId = tenantId;
         TenantCode = tenantCode;

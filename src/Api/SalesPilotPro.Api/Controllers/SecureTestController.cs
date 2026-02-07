@@ -6,42 +6,34 @@ namespace SalesPilotPro.Api.Controllers;
 
 [ApiController]
 [Route("api/secure")]
-[Authorize] // 🔐 PROTEGIDO POR JWT
 public sealed class SecureTestController : ControllerBase
 {
-    private readonly ITenantContext _tenant;
-    private readonly IUserContext _user;
-    private readonly IModuleContext _modules;
+    private readonly ITenantContext _tenantContext;
+    private readonly IUserContext _userContext;
+    private readonly IModuleContext _moduleContext;
 
     public SecureTestController(
-        ITenantContext tenant,
-        IUserContext user,
-        IModuleContext modules)
+        ITenantContext tenantContext,
+        IUserContext userContext,
+        IModuleContext moduleContext)
     {
-        _tenant = tenant;
-        _user = user;
-        _modules = modules;
+        _tenantContext = tenantContext;
+        _userContext = userContext;
+        _moduleContext = moduleContext;
     }
 
+    // ⚠️ SOLO PARA DEV / JWT TEST
+    [AllowAnonymous]
     [HttpGet("whoami")]
-public IActionResult WhoAmI()
-{
-    // Ejemplos de módulos a verificar (DEV)
-    var checkedModules = new[] { "Budget", "Reports", "Users" };
-
-    var moduleStatus = checkedModules
-        .Select(m => new
-        {
-            module = m,
-            enabled = _modules.IsModuleEnabled(m)
-        });
-
-    return Ok(new
+    public IActionResult WhoAmI()
     {
-        tenantId = _tenant.TenantId,
-        userId = _user.UserId,
-        roles = _user.Roles,
-        modules = moduleStatus
-    });
-}
+        return Ok(new
+        {
+            tenantId = _tenantContext.TenantId,
+            tenantCode = _tenantContext.TenantCode,
+            userId = _userContext.UserId,
+            roles = _userContext.Roles,
+            crmEnabled = _moduleContext.IsModuleEnabled("CRM")
+        });
+    }
 }

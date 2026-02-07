@@ -3,16 +3,21 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SalesPilotPro.Api.Contexts;
 using SalesPilotPro.Api.Middleware;
+using SalesPilotPro.Api.Persistence;
 using SalesPilotPro.Api.Security;
+using SalesPilotPro.Api.Services;
+using SalesPilotPro.Api.Services.Interfaces;
 using SalesPilotPro.Core.Contexts;
 using SalesPilotPro.Core.Security;
 using SalesPilotPro.Infrastructure.DependencyInjection;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+var isDevelopment = builder.Environment.IsDevelopment();
 
 // =======================
 // CONFIG
@@ -28,43 +33,128 @@ var ratePermitLimit =
 var rateWindowSeconds =
     builder.Configuration.GetValue<int>("RateLimit:WindowSeconds", 60);
 
+var iamBaseUrl = builder.Configuration["Iam:BaseUrl"];
+
 // =======================
 // SERVICES
 // =======================
 
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
 
-// Tenant / Session (DEV)
-builder.Services.AddScoped<ITenantContext, DevTenantContext>();
-builder.Services.AddScoped<ISessionValidationClient, DevSessionValidationClient>();
+// -----------------------
+// CONTEXTS (DESDE HttpContext)
+// -----------------------
 
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.PropertyNamingPolicy =
-            System.Text.Json.JsonNamingPolicy.CamelCase;
-        options.JsonSerializerOptions.DictionaryKeyPolicy =
-            System.Text.Json.JsonNamingPolicy.CamelCase;
-    });
+builder.Services.AddScoped<ITenantContext, HttpTenantContext>();
+builder.Services.AddScoped<IUserContext, HttpUserContext>();
+builder.Services.AddScoped<IModuleContext, HttpModuleContext>();
 
-builder.Services.AddSwaggerGen(c =>
+// -----------------------
+// SESSION VALIDATION
+// -----------------------
+
+if (isDevelopment)
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    builder.Services.AddScoped<ISessionValidationClient, DevSessionValidationClient>();
+}
+else
+{
+    builder.Services.AddHttpClient<HttpSessionValidationClient>(client =>
     {
-        Title = "SalesPilotPro CRM API",
-        Version = "v1"
+        if (string.IsNullOrWhiteSpace(iamBaseUrl))
+            throw new InvalidOperationException("Iam:BaseUrl is not configured");
+
+        client.BaseAddress = new Uri(iamBaseUrl);
     });
 
-    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    builder.Services.AddScoped<ISessionValidationClient>(sp =>
+        sp.GetRequiredService<HttpSessionValidationClient>());
+}
+
+// -----------------------
+// DATABASE
+// -----------------------
+
+builder.Services.AddDbContext<CrmDbContext>(options =>
+{
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+
+// -----------------------
+// SERVICES
+// -----------------------
+
+builder.Services.AddScoped<IAuditService, AuditService>();
+
+builder.Services.AddControllers();
+
+// -----------------------
+// API VERSIONING (PASIVO – SOLO PARA ESTABILIZAR PIPELINE)
+// -----------------------
+
+builder.Services.AddApiVersioning(options =>
+{
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.ReportApiVersions = false;
+});
+
+// -----------------------
+// AUTHENTICATION (JWT)
+// -----------------------
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = !isDevelopment;
+        options.MapInboundClaims = false;
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!)
+            ),
+            ClockSkew = TimeSpan.Zero,
+            NameClaimType = "sub"
+        };
+    });
+
+// -----------------------
+// AUTHORIZATION
+// -----------------------
+
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy =
+        new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+            .RequireAuthenticatedUser()
+            .Build();
+});
+
+// -----------------------
+// SWAGGER
+// -----------------------
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Name = "Authorization",
         Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
         Scheme = "bearer",
         BearerFormat = "JWT",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Ingrese: Bearer {token}"
     });
 
-    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
     {
         {
             new Microsoft.OpenApi.Models.OpenApiSecurityScheme
@@ -80,143 +170,37 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+
+// -----------------------
+// INFRASTRUCTURE
+// -----------------------
+
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // =======================
-// AUTHENTICATION (JWT)
+// PIPELINE
 // =======================
-
-builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.RequireHttpsMetadata = false;
-        options.MapInboundClaims = false;
-
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey =
-                new SymmetricSecurityKey(
-                    Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!)
-                ),
-            ClockSkew = TimeSpan.Zero,
-            NameClaimType = "sub"
-        };
-    });
-
-// =======================
-// AUTHORIZATION
-// =======================
-
-builder.Services.AddAuthorization(options =>
-{
-    options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
-        .RequireAuthenticatedUser()
-        .Build();
-
-    options.AddPolicy("MODULE_CRM",
-        policy => policy.RequireClaim("mods", "CRM"));
-});
-
-// =======================
-// API VERSIONING
-// =======================
-
-builder.Services.AddApiVersioning(options =>
-{
-    options.DefaultApiVersion = new ApiVersion(1, 0);
-    options.AssumeDefaultVersionWhenUnspecified = true;
-    options.ReportApiVersions = true;
-});
-
-builder.Services.AddVersionedApiExplorer(options =>
-{
-    options.GroupNameFormat = "'v'V";
-    options.SubstituteApiVersionInUrl = true;
-});
-
-// =======================
-// HEALTH
-// =======================
-
-builder.Services.AddHealthChecks();
-
-// =======================
-// RATE LIMITING
-// =======================
-
-builder.Services.AddRateLimiter(options =>
-{
-    options.AddFixedWindowLimiter("fixed", opt =>
-    {
-        opt.PermitLimit = ratePermitLimit;
-        opt.Window = TimeSpan.FromSeconds(rateWindowSeconds);
-        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-        opt.QueueLimit = 0;
-    });
-});
-
-// =======================
-// CORS
-// =======================
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("default", policy =>
-    {
-        policy
-            .WithOrigins(allowedOrigins)
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
-    });
-});
-
-// =======================
-// LOGGING
-// =======================
-
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
-    .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .WriteTo.File("Logs/salespilotpro-.log", rollingInterval: RollingInterval.Day)
-    .CreateLogger();
-
-builder.Host.UseSerilog();
 
 var app = builder.Build();
 
-// =======================
-// PIPELINE (ORDEN CORRECTO)
-// =======================
-
-app.UseMiddleware<CorrelationIdMiddleware>();
-
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-app.UseCors("default");
-
 app.UseRouting();
 
-// ⬇️ Health DESPUÉS de routing y ANTES de auth
-app.MapHealthChecks("/health").AllowAnonymous();
-
 app.UseAuthentication();
+
+// 👉 AQUI SE POBLA HttpContext.Items
+app.UseMiddleware<JwtContextMiddleware>();
+
 app.UseMiddleware<TenantGateMiddleware>();
 app.UseMiddleware<SessionValidationMiddleware>();
-app.UseAuthorization();
 
-app.UseRateLimiter();
+app.UseAuthorization();
 
 app.MapControllers();
 

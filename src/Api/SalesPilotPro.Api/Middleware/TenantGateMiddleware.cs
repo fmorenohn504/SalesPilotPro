@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
-using SalesPilotPro.Api.Contexts;
+using SalesPilotPro.Api.Services.Interfaces;
 using SalesPilotPro.Core.Contexts;
 
 namespace SalesPilotPro.Api.Middleware;
@@ -13,11 +13,12 @@ public sealed class TenantGateMiddleware
         _next = next;
     }
 
-    public async Task InvokeAsync(HttpContext context)
+    public async Task InvokeAsync(
+        HttpContext context,
+        IAuditService auditService)
     {
         var endpoint = context.GetEndpoint();
 
-        // ⬇️ RESPETAR AllowAnonymous
         if (endpoint?.Metadata.GetMetadata<IAllowAnonymous>() != null)
         {
             await _next(context);
@@ -31,16 +32,28 @@ public sealed class TenantGateMiddleware
         }
 
         var tenantIdClaim = context.User.FindFirst("tid")?.Value;
-        var tenantCodeClaim = context.User.FindFirst("tcode")?.Value ?? "DEV";
 
-        if (!Guid.TryParse(tenantIdClaim, out var tenantId))
+        if (!Guid.TryParse(tenantIdClaim, out var tenantIdFromToken))
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             return;
         }
 
-        context.Items[nameof(ITenantContext)] =
-            new TenantContext(tenantId, tenantCodeClaim);
+        // 🔑 Resolver el contexto SOLO aquí
+        var tenantContext =
+            context.RequestServices.GetRequiredService<ITenantContext>();
+
+        if (tenantContext.TenantId != tenantIdFromToken)
+        {
+            await auditService.RecordAsync(
+                action: "Security.CrossTenantAccess",
+                targetType: "Tenant",
+                targetId: tenantIdFromToken.ToString()
+            );
+
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return;
+        }
 
         await _next(context);
     }
